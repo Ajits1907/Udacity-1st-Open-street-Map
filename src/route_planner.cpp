@@ -37,20 +37,20 @@ void RoutePlanner::AddNeighbors(RouteModel::Node *current_node) {
   
 current_node->FindNeighbors(); //Adds all neighbors to the neighbors vector through this call
 
- std::vector<RouteModel::Node*>::iterator ptr=(current_node->neighbors).begin(); //created an iterator to vector of Node pointers
+std::vector<RouteModel::Node*>::iterator ptr=(current_node->neighbors).begin(); //created an iterator to vector of Node pointers
 
   while(ptr< (current_node->neighbors).end())
-  //for(RouteModel::Node* element : current_node->neighbors)
   {
   RouteModel::Node* element= *ptr;  
   element->parent= current_node;
   element->h_value =RoutePlanner::CalculateHValue(element);
   element->g_value = current_node->g_value + current_node->distance(*element) ;
+  open_list.push_back(element);
   element->visited =true;  
-
   ptr++;
-  //  element++;
-  }
+   
+  } 
+
 }
 
 
@@ -60,10 +60,14 @@ current_node->FindNeighbors(); //Adds all neighbors to the neighbors vector thro
 // - Create a pointer to the node in the list with the lowest sum.
 // - Remove that node from the open_list.
 // - Return the pointer.
+bool Compare(const RouteModel::Node* a,const RouteModel::Node* b)
+{
+    return (a->g_value + a->h_value) > (b->g_value + b->h_value);
+}
 
 RouteModel::Node *RoutePlanner::NextNode() {
-std::sort(open_list.begin(),open_list.end()); // sort in ascending to have the lowest sum ahead
-std::reverse(open_list.begin(),open_list.end()); //reverse to have that lowest at the end
+std::sort(open_list.begin(),open_list.end(),Compare); // sort in ascending to have the lowest sum ahead
+//std::reverse(open_list.begin(),open_list.end()); //reverse to have that lowest at the end
 
   RouteModel::Node* next_node = open_list.back(); //create pointer to that lowest sum
   open_list.pop_back(); // remove it from the open list
@@ -87,12 +91,11 @@ std::vector<RouteModel::Node> RoutePlanner::ConstructFinalPath(RouteModel::Node 
     std::vector<RouteModel::Node> path_found;
 
     // TODO: Implement your solution here.
-  RouteModel::Node* ptr= current_node;
-  while(ptr !=start_node)
+  while(current_node!=start_node)
   {
     distance=distance+ current_node->distance(*(current_node->parent));
     path_found.push_back(*current_node);
-    ptr= current_node->parent;
+    current_node= current_node->parent;
     }
   
   path_found.push_back(*start_node);  //add the start node at the back
@@ -113,7 +116,22 @@ std::vector<RouteModel::Node> RoutePlanner::ConstructFinalPath(RouteModel::Node 
 
 void RoutePlanner::AStarSearch() {
     RouteModel::Node *current_node = nullptr;
-
+    
     // TODO: Implement your solution here.
+
+start_node->visited = true;
+open_list.push_back(start_node);
+  
+  while(open_list.size() >0){
+ 
+  current_node = NextNode();   //RouteModel::Node* RoutePlanner::NextNode() 
+  if(current_node == end_node)
+  {    
+   break;
+    }
+    AddNeighbors(current_node) ;
+    }
+  
+  m_Model.path=ConstructFinalPath(current_node) ;
 
 }
